@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LSESU 经济学竞赛练习 | LSESU Economics Practice</title>
+    <link rel="icon" href="./school-logo.jpg" />
+    <link rel="stylesheet" href="./styles.css?v=20260708-lsesu1" />
+  </head>
+  <body>
+    <main id="entryScreen" class="entry-screen">
+      <section class="entry-panel" aria-label="练习模式选择 / Practice mode selection">
+        <div class="entry-hero">
+          <div class="entry-copy">
+            <div class="brand-lockup">
+              <img class="school-logo" src="./school-logo.jpg" alt="学校标识 / School logo" />
+              <div>
+                <span class="eyebrow">LSESU Economics Practice Center</span>
+                <h1>LSESU 经济学竞赛练习<br />LSESU Economics Practice</h1>
+              </div>
+            </div>
+            <p id="entryMeta">加载中 / Loading...</p>
+            <div class="user-status">
+              <span id="userStatus">未登录 / Not signed in</span>
+              <button id="logoutButton" type="button" class="is-hidden">退出 / Logout</button>
+            </div>
+            <div class="entry-stats" aria-label="平台数据 / Platform data">
+              <div><strong>4</strong><span>个分区 / sections</span></div>
+              <div><strong>105</strong><span>道题 / problems</span></div>
+              <div><strong>20</strong><span>图示题 / diagrams</span></div>
+            </div>
+          </div>
+          <img class="ib-logo" src="./ib-programme.jpg" alt="IB Diploma Programme" />
+        </div>
+
+        <div class="mode-grid">
+          <section class="mode-card mode-card-primary">
+            <div>
+              <span class="eyebrow">单题练习 / Single Problems</span>
+              <h2>开始 LSESU 练习<br />Start LSESU Practice</h2>
+              <p>按 Macro、Micro、Quantitative 和 Sample Test 分区练习，图示题会直接显示图片，提交后显示答案与分阶段解析。<br />Filter by section and keyword; diagram problems include images, with staged explanations after submission.</p>
+            </div>
+            <button id="startPractice" type="button">进入练习 / Start Practice</button>
+          </section>
+
+          <section class="mode-card mode-card-secondary">
+            <div>
+              <span class="eyebrow">学习记录 / Study Record</span>
+              <h2>学习记录与收藏<br />Record & Favorites</h2>
+              <p>查看已做题、错题和收藏题，适合课后复盘。<br />Review answered problems, mistakes, and favorites for follow-up study.</p>
+            </div>
+            <button id="reviewMode" type="button">查看学习记录 / View Record</button>
+          </section>
+
+          <section class="mode-card mode-card-secondary">
+            <div>
+              <span class="eyebrow">平台说明 / About</span>
+              <h2>平台说明<br />About the Platform</h2>
+              <p>了解 LSESU 经济学竞赛题库范围、来源和使用方式。<br />Learn about the LSESU Economics Challenge bank, sources, and usage.</p>
+            </div>
+            <button id="aboutMode" type="button">查看 About / About</button>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <main id="practiceShell" class="app-shell is-hidden">
+      <header class="topbar">
+        <div class="brand">
+          <img class="school-logo school-logo-small" src="./school-logo.jpg" alt="学校标识 / School logo" />
+          <div>
+            <h1>LSESU 经济学竞赛练习 / LSESU Economics Practice</h1>
+            <p id="datasetMeta">加载中 / Loading...</p>
+          </div>
+        </div>
+        <div class="top-actions">
+          <div class="user-status">
+            <span id="topUserStatus">未登录 / Not signed in</span>
+          </div>
+          <div class="score-strip" aria-label="练习统计 / Practice stats">
+            <div><span id="statTotal">0</span><small>题目 / Total</small></div>
+            <div><span id="statAnswered">0</span><small>已答 / Answered</small></div>
+            <div><span id="statCorrect">0</span><small>正确 / Correct</small></div>
+          </div>
+          <button id="openReview" type="button">学习记录 / Record</button>
+          <button id="openAbout" type="button">平台说明 / About</button>
+          <button id="backToEntry" type="button">模式选择 / Modes</button>
+        </div>
+      </header>
+
+      <section class="filters" aria-label="筛选 / Filters">
+        <label class="wide">
+          <span>主题 / Topic</span>
+          <select id="topicFilter"></select>
+        </label>
+        <label>
+          <span>分区 / Section</span>
+          <select id="difficultyFilter"></select>
+        </label>
+        <label class="search">
+          <span>搜索 / Search</span>
+          <input id="searchFilter" type="search" placeholder="题号、主题、关键词 / number, topic, keyword" />
+        </label>
+        <button id="resetFilters" type="button">重置 / Reset</button>
+      </section>
+
+      <section class="workspace">
+        <aside class="problem-list" aria-label="题目列表 / Problem list">
+          <div class="list-head">
+            <strong id="listTitle">题目 / Problems</strong>
+            <button id="randomProblem" type="button">随机 / Random</button>
+          </div>
+          <div id="problemList" class="problem-grid"></div>
+        </aside>
+
+        <section class="problem-pane" aria-live="polite">
+          <div class="problem-head">
+            <div>
+              <p id="problemKicker">-</p>
+              <h2 id="problemTitle">请选择一道题 / Select a problem</h2>
+            </div>
+            <div class="nav-buttons">
+              <button id="prevProblem" type="button">上一题 / Previous</button>
+              <button id="nextProblem" type="button">下一题 / Next</button>
+            </div>
+          </div>
+          <div id="statement" class="statement"></div>
+          <div id="choicePanel" class="choice-panel" aria-label="答案选项 / Answer choices"></div>
+          <div class="answer-actions">
+            <button id="submitAnswer" type="button">提交 / Submit</button>
+            <button id="revealAnswer" type="button">看答案/解析 / Reveal</button>
+            <button id="favoriteProblem" type="button">收藏 / Favorite</button>
+            <button id="clearAnswer" type="button">清除 / Clear</button>
+          </div>
+        </section>
+
+        <aside class="solution-pane" aria-label="答案和解析 / Answer and solution">
+          <div class="solution-section">
+            <span class="eyebrow">答案 / Answer</span>
+            <div id="answerStatus" class="answer-status">未作答 / Not answered</div>
+            <div id="answerDetail" class="answer-detail"></div>
+          </div>
+          <div class="solution-section">
+            <span class="eyebrow">标签 / Tags</span>
+            <div id="problemStatusTags" class="tag-row"></div>
+          </div>
+          <div class="solution-section">
+            <span class="eyebrow">解析 / Explanation</span>
+            <div id="solutionStageControl" class="solution-stage-control is-hidden" role="group" aria-label="解析阶段 / Explanation stages">
+              <button class="solution-stage-button active" type="button" data-stage="idea">思路 / Idea</button>
+              <button class="solution-stage-button" type="button" data-stage="key_steps">主要步骤 / Main Steps</button>
+              <button class="solution-stage-button" type="button" data-stage="full_calculation">完整解析 / Full Explanation</button>
+            </div>
+            <div id="solutionBody" class="solution-body"></div>
+          </div>
+          <div class="solution-section">
+            <span class="eyebrow">来源 / Source</span>
+            <div class="source-links">
+              <span id="problemSource">LSESU PDF / PDF source</span>
+            </div>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <main id="reviewScreen" class="app-shell is-hidden">
+      <header class="topbar">
+        <div class="brand">
+          <img class="school-logo school-logo-small" src="./school-logo.jpg" alt="学校标识 / School logo" />
+          <div>
+            <h1>学习记录 / Study Record</h1>
+            <p id="reviewMeta">本机记录 / Local records</p>
+          </div>
+        </div>
+        <div class="top-actions">
+          <button id="reviewToPractice" type="button">继续练习 / Continue</button>
+          <button id="reviewToAbout" type="button">平台说明 / About</button>
+          <button id="reviewToEntry" type="button">模式选择 / Modes</button>
+        </div>
+      </header>
+      <section class="review-grid">
+        <section class="review-card">
+          <span class="eyebrow">已做题目 / Answered</span>
+          <strong id="answeredTitle">0 题 / problems</strong>
+          <div id="answeredList" class="answered-list"></div>
+        </section>
+        <section class="review-card">
+          <span class="eyebrow">错题 / Mistakes</span>
+          <strong id="mistakeTitle">0 题 / problems</strong>
+          <div id="mistakeList" class="answered-list priority-list"></div>
+        </section>
+        <section class="review-card">
+          <span class="eyebrow">收藏 / Favorites</span>
+          <strong id="favoriteTitle">0 题 / problems</strong>
+          <div id="favoriteList" class="answered-list"></div>
+        </section>
+      </section>
+    </main>
+
+    <main id="aboutScreen" class="app-shell is-hidden">
+      <header class="topbar">
+        <div class="brand">
+          <img class="school-logo school-logo-small" src="./school-logo.jpg" alt="学校标识 / School logo" />
+          <div>
+            <h1>平台说明 / About the Platform</h1>
+            <p>LSESU Economics Practice Center</p>
+          </div>
+        </div>
+        <div class="top-actions">
+          <button id="aboutToPractice" type="button">进入练习 / Practice</button>
+          <button id="aboutToEntry" type="button">模式选择 / Modes</button>
+        </div>
+      </header>
+      <section class="about-page" aria-label="平台说明 / About the platform">
+        <div class="about-hero">
+          <div>
+            <span class="eyebrow">About This Platform</span>
+            <h2>面向 LSESU Economics Challenge 的经济学训练平台<br />An Economics Practice Platform for the LSESU Economics Challenge</h2>
+            <p>平台整理了 PDF 中的 Macro、Micro、Quantitative 题库与 Sample Test，支持分区筛选、图示题查看、在线作答和分阶段解析。<br />The platform organizes the PDF question bank and sample test by section, with filtering, diagram images, online answering, and staged explanations.</p>
+          </div>
+          <img class="ib-logo" src="./ib-programme.jpg" alt="IB Diploma Programme" />
+        </div>
+        <div class="about-grid">
+          <section class="about-card">
+            <span class="eyebrow">题库范围 / Problem Bank</span>
+            <h3>LSESU 经济学竞赛分区题库<br />LSESU Economics Challenge Sections</h3>
+            <p>包括 Macro、Micro、Quantitative Foundations，以及 25 题 Sample Test。</p>
+          </section>
+          <section class="about-card">
+            <span class="eyebrow">练习方式 / Practice</span>
+            <h3>在线选择题作答<br />Online Multiple Choice</h3>
+            <p>学生可以提交答案、查看正确选项、阅读思路、主要步骤和完整解析，并在本机保存练习记录。</p>
+          </section>
+          <section class="about-card">
+            <span class="eyebrow">来源 / Source</span>
+            <h3>来自本地 LSESU 经济学竞赛 PDF<br />From Local LSESU Economics Challenge PDF</h3>
+            <p>题目、答案、解析和图示截图来自用户提供的 LSESU 经济学竞赛 PDF 文件；图示题已附上原题图片。</p>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script defer src="./lsesu_question_bank.js?v=20260708-lsesu1"></script>
+    <script defer src="./app.js?v=20260708-lsesu1"></script>
+  </body>
+</html>
