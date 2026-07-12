@@ -43,6 +43,15 @@
             <button id="startPractice" type="button">进入练习 / Start Practice</button>
           </section>
 
+          <section id="assignedPracticeCard" class="mode-card mode-card-primary is-hidden" aria-label="经济社布置题目 / Econ Club assignments">
+            <div>
+              <span class="eyebrow">经济社任务 / Econ Club</span>
+              <h2>老师布置题目<br />Assigned Problems</h2>
+              <p>完成经济社老师布置的 LSESU 题目；提交后可直接查看答案和分阶段解析。<br />Complete assigned LSESU problems with answers and staged explanations after submission.</p>
+            </div>
+            <button id="assignedPracticeMode" type="button">进入布置题目 / Open Assignments</button>
+          </section>
+
           <section class="mode-card mode-card-secondary">
             <div>
               <span class="eyebrow">学习记录 / Study Record</span>
@@ -61,6 +70,24 @@
             <button id="aboutMode" type="button">查看 About / About</button>
           </section>
         </div>
+      </section>
+    </main>
+
+    <main id="assignmentScreen" class="assignment-screen is-hidden">
+      <header class="topbar">
+        <div class="brand">
+          <img class="school-logo school-logo-small" src="./school-logo.jpg" alt="学校标识 / School logo" />
+          <div><h1>经济社布置题目 / Econ Club Assignments</h1><p id="assignmentMeta">加载 LSESU 任务中 / Loading LSESU assignments...</p></div>
+        </div>
+        <div class="top-actions">
+          <div class="user-status"><span id="assignmentUserStatus">未登录 / Not signed in</span></div>
+          <button id="assignmentRefresh" type="button">刷新 / Refresh</button>
+          <button id="assignmentToEntry" type="button">模式选择 / Modes</button>
+        </div>
+      </header>
+      <section class="assignment-page" aria-label="老师布置的 LSESU 题目 / Assigned LSESU problems">
+        <div class="assignment-intro"><span class="eyebrow">Econ Club / LSESU Practice</span><h2>老师布置的 LSESU 题目</h2><p>选择一个任务即可直接进入作答；答案、解析与完成情况会保存在练习记录中。</p></div>
+        <div id="assignmentList" class="assignment-list"></div>
       </section>
     </main>
 
@@ -242,6 +269,6 @@
 
     <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script defer src="./lsesu_question_bank.js?v=20260708-lsesu1"></script>
-    <script defer src="./app.js?v=20260708-lsesu1"></script>
+    <script defer src="./app.js?v=20260712-econ-assignments1"></script>
   </body>
 </html>

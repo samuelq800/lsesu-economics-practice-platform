@@ -32,6 +32,14 @@ const els = {
   topUserStatus: document.querySelector("#topUserStatus"),
   logoutButton: document.querySelector("#logoutButton"),
   startPractice: document.querySelector("#startPractice"),
+  assignedPracticeCard: document.querySelector("#assignedPracticeCard"),
+  assignedPracticeMode: document.querySelector("#assignedPracticeMode"),
+  assignmentScreen: document.querySelector("#assignmentScreen"),
+  assignmentMeta: document.querySelector("#assignmentMeta"),
+  assignmentUserStatus: document.querySelector("#assignmentUserStatus"),
+  assignmentList: document.querySelector("#assignmentList"),
+  assignmentRefresh: document.querySelector("#assignmentRefresh"),
+  assignmentToEntry: document.querySelector("#assignmentToEntry"),
   reviewMode: document.querySelector("#reviewMode"),
   aboutMode: document.querySelector("#aboutMode"),
   backToEntry: document.querySelector("#backToEntry"),
@@ -86,6 +94,8 @@ const state = {
   revealed: false,
   solutionStage: "idea",
   mode: "entry",
+  assignments: [],
+  activeAssignmentId: null,
   progress: loadJson(STORAGE_KEY, {}),
   marks: loadJson(MARKS_KEY, {}),
   supabase: null,
@@ -123,9 +133,10 @@ function renderUserStatus() {
   const label = state.user
     ? `${state.profile?.display_name || state.user.email} · ${state.profile?.role || "student"}`
     : "未登录 / Guest local records";
-  [els.userStatus, els.topUserStatus].forEach((node) => {
+  [els.userStatus, els.topUserStatus, els.assignmentUserStatus].forEach((node) => {
     if (node) node.textContent = label;
   });
+  els.assignedPracticeCard.classList.toggle("is-hidden", state.profile?.role !== "econclubmembers");
   els.logoutButton.classList.toggle("is-hidden", !state.user);
 }
 
@@ -140,10 +151,12 @@ async function initAuth() {
     state.user = data.session?.user || null;
     state.profile = state.user ? await loadProfile(state.user) : null;
     renderUserStatus();
+    await loadAssignments();
     client.auth.onAuthStateChange(async (_event, session) => {
       state.user = session?.user || null;
       state.profile = state.user ? await loadProfile(state.user) : null;
       renderUserStatus();
+      await loadAssignments();
     });
   } catch (error) {
     console.warn("Cloud login unavailable:", error);
@@ -230,9 +243,106 @@ function updateMeta() {
   els.datasetMeta.textContent = text;
 }
 
+function isEconClubMember() {
+  return state.profile?.role === "econclubmembers";
+}
+
+function assignmentProblems(assignment) {
+  const byId = new Map(state.problems.map((problem) => [problem.id, problem]));
+  return (assignment?.problem_ids || []).map((id) => byId.get(id)).filter(Boolean);
+}
+
+function assignmentDue(value) {
+  if (!value) return "未设置截止时间 / No due date";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "未设置截止时间 / No due date" : `截止 / Due ${new Intl.DateTimeFormat("zh-CN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(date)}`;
+}
+
+function renderAssignments(message = "") {
+  els.assignmentList.innerHTML = "";
+  els.assignmentMeta.textContent = message || (state.assignments.length ? `${state.assignments.length} 个任务 / assignments` : "暂无已发布 LSESU 任务 / No LSESU assignments published yet.");
+  if (!state.assignments.length) {
+    const empty = document.createElement("div");
+    empty.className = "assignment-empty";
+    empty.textContent = "老师暂时还没有发布 LSESU 练习任务。 / Your teacher has not published an LSESU assignment yet.";
+    els.assignmentList.append(empty);
+    return;
+  }
+  state.assignments.forEach((assignment) => {
+    const problems = assignmentProblems(assignment);
+    const answered = problems.filter((problem) => currentProgress(problem)).length;
+    const card = document.createElement("article");
+    card.className = "assignment-card";
+    const copy = document.createElement("div");
+    const title = document.createElement("h3");
+    title.textContent = assignment.title || "LSESU 练习任务 / LSESU Assignment";
+    const note = document.createElement("p");
+    note.textContent = assignment.instructions || "提交后即可查看答案和分阶段解析。 / Submit to reveal answers and staged explanations.";
+    const meta = document.createElement("p");
+    meta.className = "assignment-meta-row";
+    meta.textContent = `${assignmentDue(assignment.due_at)} · ${answered}/${problems.length} 已完成 / completed`;
+    copy.append(title, note, meta);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = problems.length ? "开始作答 / Start" : "题目未载入 / Unavailable";
+    button.disabled = !problems.length;
+    button.addEventListener("click", () => startAssignment(assignment.id));
+    card.append(copy, button);
+    els.assignmentList.append(card);
+  });
+}
+
+async function loadAssignments() {
+  if (!isEconClubMember()) return;
+  const client = cloudClient();
+  if (!client) return;
+  const { data, error } = await client.from("econ_assignments")
+    .select("id,title,instructions,problem_ids,due_at,created_at")
+    .eq("target_role", "econclubmembers")
+    .eq("contest_type", "LSESU")
+    .order("created_at", { ascending: false });
+  if (error) {
+    renderAssignments(`无法读取任务 / Unable to load assignments: ${error.message}`);
+    return;
+  }
+  state.assignments = data || [];
+  renderAssignments();
+}
+
+async function showAssignments() {
+  if (!isEconClubMember()) return;
+  state.mode = "assignments";
+  els.entryScreen.classList.add("is-hidden");
+  els.practiceShell.classList.add("is-hidden");
+  els.reviewScreen.classList.add("is-hidden");
+  els.aboutScreen.classList.add("is-hidden");
+  els.assignmentScreen.classList.remove("is-hidden");
+  renderAssignments("读取老师布置的题目中 / Loading assignments...");
+  await loadAssignments();
+}
+
+function startAssignment(assignmentId) {
+  const assignment = state.assignments.find((item) => item.id === assignmentId);
+  const problems = assignmentProblems(assignment);
+  if (!problems.length) return;
+  state.mode = "assignment";
+  state.activeAssignmentId = assignmentId;
+  state.filtered = problems;
+  state.currentIndex = 0;
+  state.selectedChoice = currentProgress(problems[0])?.choice || null;
+  state.revealed = Boolean(currentProgress(problems[0]));
+  els.filters.classList.add("is-hidden");
+  els.randomProblem.classList.add("is-hidden");
+  els.entryScreen.classList.add("is-hidden");
+  els.assignmentScreen.classList.add("is-hidden");
+  els.practiceShell.classList.remove("is-hidden");
+  render();
+}
+
 function showEntry() {
   state.mode = "entry";
   els.entryScreen.classList.remove("is-hidden");
+  els.assignmentScreen.classList.add("is-hidden");
   els.practiceShell.classList.add("is-hidden");
   els.reviewScreen.classList.add("is-hidden");
   els.aboutScreen.classList.add("is-hidden");
@@ -240,8 +350,12 @@ function showEntry() {
 
 function showPractice() {
   state.mode = "practice";
+  state.activeAssignmentId = null;
   els.entryScreen.classList.add("is-hidden");
   els.practiceShell.classList.remove("is-hidden");
+  els.assignmentScreen.classList.add("is-hidden");
+  els.filters.classList.remove("is-hidden");
+  els.randomProblem.classList.remove("is-hidden");
   els.reviewScreen.classList.add("is-hidden");
   els.aboutScreen.classList.add("is-hidden");
   applyFilters(true);
@@ -250,6 +364,7 @@ function showPractice() {
 function showReview() {
   els.entryScreen.classList.add("is-hidden");
   els.practiceShell.classList.add("is-hidden");
+  els.assignmentScreen.classList.add("is-hidden");
   els.reviewScreen.classList.remove("is-hidden");
   els.aboutScreen.classList.add("is-hidden");
   renderReview();
@@ -258,6 +373,7 @@ function showReview() {
 function showAbout() {
   els.entryScreen.classList.add("is-hidden");
   els.practiceShell.classList.add("is-hidden");
+  els.assignmentScreen.classList.add("is-hidden");
   els.reviewScreen.classList.add("is-hidden");
   els.aboutScreen.classList.remove("is-hidden");
 }
@@ -642,6 +758,9 @@ async function init() {
 }
 
 els.startPractice.addEventListener("click", showPractice);
+els.assignedPracticeMode.addEventListener("click", showAssignments);
+els.assignmentRefresh.addEventListener("click", loadAssignments);
+els.assignmentToEntry.addEventListener("click", showEntry);
 els.reviewMode.addEventListener("click", showReview);
 els.aboutMode.addEventListener("click", showAbout);
 els.backToEntry.addEventListener("click", showEntry);

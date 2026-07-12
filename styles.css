@@ -415,6 +415,46 @@ a:hover {
   overflow: hidden;
 }
 
+.assignment-screen {
+  height: 100vh;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: hidden;
+}
+
+.assignment-page {
+  width: min(1120px, 100%);
+  flex: 1;
+  min-height: 0;
+  margin: 0 auto;
+  overflow: auto;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.assignment-intro,
+.assignment-card,
+.assignment-empty {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow-soft);
+}
+
+.assignment-intro h2,
+.assignment-card h3 { margin: 5px 0 0; }
+.assignment-intro p,
+.assignment-card p { color: var(--muted); }
+.assignment-list { display: grid; gap: 12px; }
+.assignment-card { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.assignment-card > button { min-width: 140px; color: #fff; background: var(--accent); border-color: var(--accent); }
+.assignment-card > button:disabled { color: var(--muted); background: var(--panel-soft); border-color: var(--line); }
+.assignment-meta-row { font-size: 13px; font-weight: 750; }
+
 .about-page {
   flex: 1;
   min-height: 0;
