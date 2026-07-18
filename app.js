@@ -50,6 +50,7 @@ const els = {
   reviewToEntry: document.querySelector("#reviewToEntry"),
   aboutToPractice: document.querySelector("#aboutToPractice"),
   aboutToEntry: document.querySelector("#aboutToEntry"),
+  filters: document.querySelector(".filters"),
   topicFilter: document.querySelector("#topicFilter"),
   difficultyFilter: document.querySelector("#difficultyFilter"),
   searchFilter: document.querySelector("#searchFilter"),

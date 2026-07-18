@@ -380,6 +380,58 @@ a:hover {
   border-color: rgba(0, 107, 67, 0.42);
 }
 
+.platform-card {
+  grid-column: 1 / -1;
+  min-height: 132px;
+  flex-direction: row;
+  align-items: center;
+}
+
+.platform-card > div {
+  max-width: 760px;
+}
+
+.platform-link {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 850;
+  line-height: 1.18;
+  text-align: center;
+  text-decoration: none;
+  position: relative;
+  z-index: 1;
+}
+
+.platform-link:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+.platform-card .platform-link {
+  flex: 0 0 auto;
+  min-width: 220px;
+}
+
+.top-actions .platform-link-compact {
+  min-height: 40px;
+  padding: 0 14px;
+  background: #fff;
+  color: var(--accent-strong);
+  border-color: rgba(0, 107, 67, 0.26);
+}
+
+.top-actions .platform-link-compact:hover {
+  background: var(--accent-soft);
+  border-color: rgba(0, 107, 67, 0.42);
+}
+
 .exam-pick {
   display: grid;
   gap: 6px;
@@ -1949,4 +2001,16 @@ a:focus-visible {
 .choice-button.selected {
   border-color: var(--accent);
   background: linear-gradient(180deg, #ecfdf5, #fffdf8);
+}
+
+@media (max-width: 760px) {
+  .platform-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .platform-card .platform-link {
+    width: 100%;
+    min-width: 0;
+  }
 }
