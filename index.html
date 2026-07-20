@@ -43,6 +43,17 @@
             <button id="startPractice" type="button">进入练习 / Start Practice</button>
           </section>
 
+          <section id="economyRecommendationCard" class="mode-card mode-card-primary recommendation-mode-card is-hidden" aria-label="每日经济推荐 / Daily economics recommendation">
+            <div>
+              <span class="eyebrow">每日推荐 / Daily Recommendation</span>
+              <h2 id="economyRecommendationTitle">今日 LSESU 练习<br />Today's LSESU Set</h2>
+              <p id="economyRecommendationMeta">根据正确率、知识点与难度生成 5 道题，每日零点更新。</p>
+              <div id="economyRecommendationPreview" class="recommendation-preview"></div>
+            </div>
+            <button id="economyRecommendationMode" type="button">开始今日推荐 / Start Daily Set</button>
+            <a id="economyRecommendationRedirect" class="platform-link is-hidden" href="https://samuelq800.github.io/nec-practice-platform/">前往今日推荐平台 / Open Today's Platform</a>
+          </section>
+
           <section id="assignedPracticeCard" class="mode-card mode-card-primary is-hidden" aria-label="经济社布置题目 / Econ Club assignments">
             <div>
               <span class="eyebrow">经济社任务 / Econ Club</span>
@@ -280,8 +291,10 @@
       </section>
     </main>
 
+    <div class="site-version">Version 39</div>
     <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script defer src="./lsesu_question_bank.js?v=20260708-lsesu1"></script>
-    <script defer src="./app.js?v=20260718-platform-return2"></script>
+    <script defer src="./recommendation-engine.js?v=39"></script>
+    <script defer src="./app.js?v=39"></script>
   </body>
 </html>

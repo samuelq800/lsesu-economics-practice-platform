@@ -4,6 +4,8 @@ const STORAGE_KEY = "lsesu-practice-progress-v1";
 const MARKS_KEY = "lsesu-practice-marks-v1";
 const SUPABASE_URL = "https://bwlcnaruyjazaxyiiumd.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_bGhQso88Ml6VEpX4reo8QQ_VjwL7yND";
+const CURRENT_CONTEST = "LSESU";
+const OTHER_ECONOMY_URL = "https://samuelq800.github.io/nec-practice-platform/";
 
 // Static GitHub Pages frontend: use only the Supabase publishable/anon key.
 // Never add a service_role key, database password, JWT secret, or private key here.
@@ -84,6 +86,12 @@ const els = {
   mistakeList: document.querySelector("#mistakeList"),
   favoriteTitle: document.querySelector("#favoriteTitle"),
   favoriteList: document.querySelector("#favoriteList"),
+  economyRecommendationCard: document.querySelector("#economyRecommendationCard"),
+  economyRecommendationTitle: document.querySelector("#economyRecommendationTitle"),
+  economyRecommendationMeta: document.querySelector("#economyRecommendationMeta"),
+  economyRecommendationPreview: document.querySelector("#economyRecommendationPreview"),
+  economyRecommendationMode: document.querySelector("#economyRecommendationMode"),
+  economyRecommendationRedirect: document.querySelector("#economyRecommendationRedirect"),
 };
 
 const state = {
@@ -102,6 +110,9 @@ const state = {
   supabase: null,
   user: null,
   profile: null,
+  allAttempts: [],
+  dailyRecommendations: [],
+  economyContest: "NEC",
 };
 
 function cloudClient() {
@@ -138,7 +149,78 @@ function renderUserStatus() {
     if (node) node.textContent = label;
   });
   els.assignedPracticeCard.classList.toggle("is-hidden", state.profile?.role !== "econclubmembers");
+  els.economyRecommendationCard.classList.toggle("is-hidden", !state.user);
   els.logoutButton.classList.toggle("is-hidden", !state.user);
+}
+
+function requestedRecommendationIds() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("mode") !== "recommended") return [];
+  return String(params.get("problems") || "").split(",").map((id) => id.trim()).filter(Boolean);
+}
+
+function renderRecommendationPreview() {
+  els.economyRecommendationPreview.innerHTML = "";
+  state.dailyRecommendations.forEach((problem) => {
+    const chip = document.createElement("span");
+    chip.textContent = `${problem.section || problem.topic} #${problem.number}`;
+    els.economyRecommendationPreview.append(chip);
+  });
+}
+
+async function loadDailyRecommendation() {
+  if (!state.user || !window.SZZXRecommendations) return;
+  const client = cloudClient();
+  const { data, error } = await client.from("attempts")
+    .select("problem_id,contest_type,year,level,form,number,topic,difficulty,is_correct,mode,submitted_at")
+    .eq("user_id", state.user.id)
+    .order("submitted_at", { ascending: true });
+  if (error) {
+    els.economyRecommendationMeta.textContent = `推荐暂时无法生成 / Recommendation unavailable: ${error.message}`;
+    return;
+  }
+  state.allAttempts = data || [];
+  state.economyContest = window.SZZXRecommendations.selectEconomyContest(
+    window.SZZXRecommendations.historyBeforeToday(state.allAttempts)
+  );
+  if (state.economyContest !== CURRENT_CONTEST) {
+    state.dailyRecommendations = [];
+    els.economyRecommendationTitle.innerHTML = `今日推荐在 ${state.economyContest}<br />Today's Set: ${state.economyContest}`;
+    els.economyRecommendationMeta.textContent = "NEC 与 LSESU 每天只推荐一个平台；点击下方前往今日题组。";
+    els.economyRecommendationPreview.innerHTML = "";
+    els.economyRecommendationMode.classList.add("is-hidden");
+    els.economyRecommendationRedirect.classList.remove("is-hidden");
+    els.economyRecommendationRedirect.href = `${OTHER_ECONOMY_URL}?mode=recommended`;
+    return;
+  }
+  const requested = requestedRecommendationIds().map((id) => state.problems.find((problem) => problem.id === id)).filter(Boolean);
+  state.dailyRecommendations = requested.length ? requested.slice(0, 5) : window.SZZXRecommendations.recommend(
+    state.problems,
+    state.allAttempts,
+    { userId: state.user.id, domain: "economy", selectedContest: CURRENT_CONTEST, count: 5 }
+  );
+  els.economyRecommendationTitle.innerHTML = "今日 LSESU 练习<br />Today's LSESU Set";
+  els.economyRecommendationMeta.textContent = `${window.SZZXRecommendations.dayKey()} · ${state.dailyRecommendations.length} 道题 · 明日按最新表现更新。`;
+  els.economyRecommendationMode.classList.remove("is-hidden");
+  els.economyRecommendationRedirect.classList.add("is-hidden");
+  renderRecommendationPreview();
+  if (new URLSearchParams(window.location.search).get("mode") === "recommended") startDailyRecommendation();
+}
+
+function startDailyRecommendation() {
+  if (!state.dailyRecommendations.length) return;
+  state.mode = "recommended";
+  state.activeAssignmentId = null;
+  state.filtered = state.dailyRecommendations.slice();
+  state.currentIndex = 0;
+  state.selectedChoice = currentProgress(state.filtered[0])?.choice || null;
+  state.revealed = Boolean(currentProgress(state.filtered[0]));
+  els.filters.classList.add("is-hidden");
+  els.randomProblem.classList.add("is-hidden");
+  els.entryScreen.classList.add("is-hidden");
+  els.assignmentScreen.classList.add("is-hidden");
+  els.practiceShell.classList.remove("is-hidden");
+  render();
 }
 
 async function initAuth() {
@@ -153,11 +235,13 @@ async function initAuth() {
     state.profile = state.user ? await loadProfile(state.user) : null;
     renderUserStatus();
     await loadAssignments();
+    await loadDailyRecommendation();
     client.auth.onAuthStateChange(async (_event, session) => {
       state.user = session?.user || null;
       state.profile = state.user ? await loadProfile(state.user) : null;
       renderUserStatus();
       await loadAssignments();
+      await loadDailyRecommendation();
     });
   } catch (error) {
     console.warn("Cloud login unavailable:", error);
@@ -172,6 +256,8 @@ async function logout() {
   if (client) await client.auth.signOut();
   state.user = null;
   state.profile = null;
+  state.allAttempts = [];
+  state.dailyRecommendations = [];
   renderUserStatus();
 }
 
@@ -525,7 +611,8 @@ function renderStats() {
   els.statTotal.textContent = String(state.filtered.length);
   els.statAnswered.textContent = String(progress.length);
   els.statCorrect.textContent = String(progress.filter((item) => item.correct).length);
-  updateMeta();
+  if (state.mode === "recommended") els.datasetMeta.textContent = `${window.SZZXRecommendations.dayKey()} · 今日 LSESU 推荐 · ${state.filtered.length} 题`;
+  else updateMeta();
 }
 
 function renderList() {
@@ -759,6 +846,7 @@ async function init() {
 }
 
 els.startPractice.addEventListener("click", showPractice);
+els.economyRecommendationMode.addEventListener("click", startDailyRecommendation);
 els.assignedPracticeMode.addEventListener("click", showAssignments);
 els.assignmentRefresh.addEventListener("click", loadAssignments);
 els.assignmentToEntry.addEventListener("click", showEntry);
