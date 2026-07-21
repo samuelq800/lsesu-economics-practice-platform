@@ -1,7 +1,7 @@
 (function recommendationEngine(global) {
   "use strict";
 
-  const VERSION = "40";
+  const VERSION = "41";
   const DAY_ZONE = "Asia/Shanghai";
   const MATH_DIMENSIONS = [
     ["prealgebra", "基础运算"],
@@ -119,20 +119,13 @@
   }
 
   function scoreRows(rows) {
-    if (!rows.length) return { score: 35, accuracy: 0, count: 0, confidence: 0 };
-    let earned = 0;
-    let possible = 0;
-    for (const row of rows) {
-      const weight = difficultyWeight(row);
-      possible += weight;
-      if (row.is_correct) earned += weight;
-    }
-    const accuracy = possible ? earned / possible : 0;
-    const confidence = clamp(rows.length / 12, 0, 1);
-    const challenge = rows.reduce((sum, row) => sum + difficultyWeight(row), 0) / rows.length;
-    const measured = clamp(18 + accuracy * 68 + (challenge - 1) * 10, 12, 96);
+    if (!rows.length) return { score: 50, accuracy: 0, count: 0, confidence: 0 };
+    const correct = rows.filter((row) => row.is_correct).length;
+    const accuracy = correct / rows.length;
+    const confidence = clamp(rows.length / 10, 0, 1);
+    const accuracyScore = accuracy * 100;
     return {
-      score: Math.round(35 * (1 - confidence) + measured * confidence),
+      score: Math.round(50 * (1 - confidence) + accuracyScore * confidence),
       accuracy,
       count: rows.length,
       confidence,
@@ -156,7 +149,7 @@
     const correct = latest.filter((row) => row.is_correct).length;
     const overall = total
       ? Math.round(dimensions.reduce((sum, item) => sum + item.score, 0) / dimensions.length)
-      : 35;
+      : 50;
     const weakest = dimensions.slice().sort((a, b) => a.score - b.score || b.count - a.count)[0];
     return { domain, dimensions, overall, total, correct, weakest };
   }
