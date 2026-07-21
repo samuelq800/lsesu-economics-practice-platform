@@ -115,6 +115,9 @@ SOURCE = {
 
 def clean_text(text):
     text = (text or "").replace("\x00", "")
+    text = re.sub(r"\bith\s*class\b", "i-th class", text, flags=re.I)
+    text = re.sub(r"\b([IVX]+)\.(?=[A-Z])", r"\1. ", text)
+    text = re.sub(r"(?<=[a-z])\.(?=[A-Z])", ". ", text)
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r"\n{3,}", "\n\n", text)
     return text.strip()
@@ -123,7 +126,7 @@ def clean_text(text):
 def page_text(pdf, start, end):
     chunks = []
     for page_number in range(start, end + 1):
-        chunks.append(pdf.pages[page_number - 1].extract_text() or "")
+        chunks.append(pdf.pages[page_number - 1].extract_text(x_tolerance=1) or "")
     return clean_text("\n".join(chunks))
 
 
