@@ -2,6 +2,7 @@
 const DATA_URL = "./lsesu_question_bank.json";
 const STORAGE_KEY = "lsesu-practice-progress-v1";
 const MARKS_KEY = "lsesu-practice-marks-v1";
+const CLOUD_SYNC_KEY = "lsesu-cloud-sync-v1";
 const SUPABASE_URL = "https://bwlcnaruyjazaxyiiumd.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_bGhQso88Ml6VEpX4reo8QQ_VjwL7yND";
 const CURRENT_CONTEST = "LSESU";
@@ -113,6 +114,7 @@ const state = {
   allAttempts: [],
   dailyRecommendations: [],
   economyContest: "NEC",
+  syncingAttempts: null,
 };
 
 function cloudClient() {
@@ -235,12 +237,14 @@ async function initAuth() {
     state.profile = state.user ? await loadProfile(state.user) : null;
     renderUserStatus();
     await loadAssignments();
+    await syncLocalAttempts();
     await loadDailyRecommendation();
     client.auth.onAuthStateChange(async (_event, session) => {
       state.user = session?.user || null;
       state.profile = state.user ? await loadProfile(state.user) : null;
       renderUserStatus();
       await loadAssignments();
+      await syncLocalAttempts();
       await loadDailyRecommendation();
     });
   } catch (error) {
@@ -262,11 +266,11 @@ async function logout() {
 }
 
 async function saveAttemptCloud(problem, progress) {
-  if (!state.user) return;
+  if (!state.user) return false;
   const client = cloudClient();
-  if (!client) return;
+  if (!client) return false;
   // TODO: If future LSESU formats need extra fields, add LSESU-specific columns or metadata.
-  await client.from("attempts").insert({
+  const { error } = await client.from("attempts").insert({
     user_id: state.user.id,
     problem_id: problem.id,
     exam_id: problem.display_name || null,
@@ -286,6 +290,53 @@ async function saveAttemptCloud(problem, progress) {
     source_url: window.location.href,
     submitted_at: progress.submittedAt || new Date().toISOString(),
   });
+  if (error) {
+    console.warn("LSESU attempt cloud save failed:", error);
+    return false;
+  }
+  return true;
+}
+
+async function syncLocalAttempts() {
+  if (!state.user) return;
+  if (state.syncingAttempts) return state.syncingAttempts;
+  const syncKey = `${CLOUD_SYNC_KEY}:${state.user.id}`;
+  if (localStorage.getItem(syncKey) === "complete") return;
+  state.syncingAttempts = (async () => {
+    const localRows = Object.entries(state.progress)
+      .filter(([, progress]) => progress?.choice && progress?.submittedAt);
+    if (!localRows.length) {
+      localStorage.setItem(syncKey, "complete");
+      return;
+    }
+    const client = cloudClient();
+    const { data, error } = await client.from("attempts")
+      .select("problem_id,submitted_at")
+      .eq("user_id", state.user.id)
+      .eq("contest_type", CURRENT_CONTEST);
+    if (error) {
+      console.warn("LSESU cloud history check failed:", error);
+      return;
+    }
+    const latestCloud = new Map();
+    (data || []).forEach((row) => {
+      const timestamp = new Date(row.submitted_at || 0).getTime();
+      if (timestamp > (latestCloud.get(row.problem_id) || 0)) latestCloud.set(row.problem_id, timestamp);
+    });
+    let complete = true;
+    for (const [problemId, progress] of localRows) {
+      const submittedAt = new Date(progress.submittedAt).getTime();
+      if ((latestCloud.get(problemId) || 0) >= submittedAt) continue;
+      const problem = state.problems.find((item) => item.id === problemId);
+      if (!problem || !await saveAttemptCloud(problem, progress)) complete = false;
+    }
+    if (complete) localStorage.setItem(syncKey, "complete");
+  })();
+  try {
+    await state.syncingAttempts;
+  } finally {
+    state.syncingAttempts = null;
+  }
 }
 
 function loadJson(key, fallback) {
@@ -535,7 +586,7 @@ function setSelected(choice) {
   render();
 }
 
-function submitAnswer() {
+async function submitAnswer() {
   const problem = currentProblem();
   if (!problem || !state.selectedChoice) return;
   const correct = answerMatches(problem, state.selectedChoice);
@@ -548,10 +599,10 @@ function submitAnswer() {
     attempts: (previous.attempts || 0) + 1,
     everWrong: Boolean(previous.everWrong || !correct),
   };
-  saveAttemptCloud(problem, state.progress[problem.id]);
   state.revealed = true;
   saveProgress();
   render();
+  await saveAttemptCloud(problem, state.progress[problem.id]);
 }
 
 function revealAnswer() {

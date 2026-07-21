@@ -1,7 +1,7 @@
 (function recommendationEngine(global) {
   "use strict";
 
-  const VERSION = "42";
+  const VERSION = "43";
   const DAY_ZONE = "Asia/Shanghai";
   const MATH_DIMENSIONS = [
     ["prealgebra", "基础运算"],
