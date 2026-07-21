@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>LSESU 经济学竞赛练习 | LSESU Economics Practice</title>
     <link rel="icon" href="./school-logo.jpg" />
-    <link rel="stylesheet" href="./styles.css?v=20260718-platform-return2" />
+    <link rel="stylesheet" href="./styles.css?v=44" />
   </head>
   <body>
     <main id="entryScreen" class="entry-screen">
@@ -63,6 +63,15 @@
             <button id="assignedPracticeMode" type="button">进入布置题目 / Open Assignments</button>
           </section>
 
+          <section id="competitionAdminCard" class="mode-card mode-card-secondary is-hidden" aria-label="LSESU 管理员面板 / LSESU admin dashboard">
+            <div>
+              <span class="eyebrow">Administration</span>
+              <h2>LSESU 管理员面板<br />LSESU Admin Dashboard</h2>
+              <p>查看 LSESU 作答、学生统计并发布经济社任务。<br />Review LSESU activity and publish Econ Club assignments.</p>
+            </div>
+            <button type="button" data-open-competition-admin>管理员面板 / Admin</button>
+          </section>
+
           <section class="mode-card mode-card-secondary">
             <div>
               <span class="eyebrow">学习记录 / Study Record</span>
@@ -90,6 +99,20 @@
             <a class="platform-link" href="https://samuelq800.github.io/szzx-intl-contest-entrance/">返回总平台 / Back to Platform</a>
           </section>
         </div>
+      </section>
+    </main>
+
+    <main id="competitionAdminScreen" class="admin-screen is-hidden">
+      <header class="topbar">
+        <div class="brand"><img class="school-logo school-logo-small" src="./school-logo.jpg" alt="学校标识 / School logo" /><div><h1>LSESU 管理员面板 / Admin Dashboard</h1><p id="competitionAdminMeta">加载 LSESU 云端数据 / Loading LSESU data</p></div></div>
+        <div class="top-actions"><button id="competitionAdminRefresh" type="button">刷新 / Refresh</button><button id="competitionAdminExport" type="button">导出 CSV / Export</button><button type="button" data-close-competition-admin>模式选择 / Modes</button><a class="platform-link platform-link-compact" href="https://samuelq800.github.io/szzx-intl-contest-entrance/">总平台 / Platform</a></div>
+      </header>
+      <section class="admin-page">
+        <div class="admin-summary"><div><strong id="competitionAdminStudents">0</strong><span>学生 / Students</span></div><div><strong id="competitionAdminAttempts">0</strong><span>LSESU 作答 / Attempts</span></div><div><strong id="competitionAdminAccuracy">0%</strong><span>正确率 / Accuracy</span></div><div><strong id="competitionAdminActive">0</strong><span>7日活跃 / Active</span></div></div>
+        <section class="admin-panel"><div class="section-head"><span class="eyebrow">筛选 / Filters</span><strong>LSESU 云端记录</strong></div><div class="admin-filters"><label><span>学生 / Student</span><select id="competitionAdminStudent"></select></label><label><span>主题 / Topic</span><select id="competitionAdminTopic"></select></label><label><span>难度 / Difficulty</span><select id="competitionAdminDifficulty"></select></label><label><span>开始 / From</span><input id="competitionAdminFrom" type="date" /></label><label><span>结束 / To</span><input id="competitionAdminTo" type="date" /></label></div></section>
+        <section class="admin-grid"><div class="admin-panel"><div class="section-head"><span class="eyebrow">学生统计 / Students</span><strong id="competitionAdminStudentTitle">0 students</strong></div><div class="table-wrap"><table class="admin-table"><thead><tr><th>姓名 / Name</th><th>邮箱 / Email</th><th>作答 / Attempts</th><th>正确 / Correct</th><th>正确率 / Accuracy</th><th>最近活跃 / Last Active</th></tr></thead><tbody id="competitionAdminStudentRows"></tbody></table></div></div><div class="admin-panel"><div class="section-head"><span class="eyebrow">题目统计 / Problems</span><strong id="competitionAdminProblemTitle">0 problems</strong></div><div class="table-wrap"><table class="admin-table"><thead><tr><th>题目 / Problem</th><th>主题 / Topic</th><th>作答 / Attempts</th><th>正确率 / Accuracy</th></tr></thead><tbody id="competitionAdminProblemRows"></tbody></table></div></div></section>
+        <section class="admin-panel"><div class="section-head"><span class="eyebrow">发布任务 / Assignments</span><strong id="competitionAdminAssignmentTitle">0 assignments</strong></div><div class="admin-assignment-form"><label><span>标题 / Title</span><input id="competitionAdminAssignmentName" type="text" maxlength="100" /></label><label><span>截止日期 / Due</span><input id="competitionAdminAssignmentDue" type="date" /></label><label class="admin-assignment-problem"><span>题目 / Problem</span><select id="competitionAdminAssignmentProblem"></select></label><button id="competitionAdminAddProblem" type="button">加入题目 / Add</button><label class="admin-assignment-notes"><span>说明 / Instructions</span><textarea id="competitionAdminAssignmentNotes" rows="3" maxlength="800"></textarea></label></div><div id="competitionAdminDraft" class="admin-assignment-draft"></div><div class="admin-assignment-actions"><button id="competitionAdminPublish" class="admin-publish-button" type="button">发布给 Econ Club / Publish</button><p id="competitionAdminAssignmentMessage"></p></div><div id="competitionAdminAssignmentList" class="admin-assignment-list"></div></section>
+        <section class="admin-panel"><div class="section-head"><span class="eyebrow">最近作答 / Recent Attempts</span><strong id="competitionAdminRecentTitle">0 attempts</strong></div><div class="table-wrap"><table class="admin-table"><thead><tr><th>学生 / Student</th><th>题目 / Problem</th><th>选择 / Selected</th><th>正答 / Correct</th><th>结果 / Result</th><th>时间 / Submitted</th></tr></thead><tbody id="competitionAdminRecentRows"></tbody></table></div></section>
       </section>
     </main>
 
@@ -132,6 +155,7 @@
           </div>
           <button id="openReview" type="button">学习记录 / Record</button>
           <button id="openAbout" type="button">平台说明 / About</button>
+          <button class="admin-shortcut is-hidden" type="button" data-open-competition-admin>Admin</button>
           <button id="backToEntry" type="button">模式选择 / Modes</button>
           <a class="platform-link platform-link-compact" href="https://samuelq800.github.io/szzx-intl-contest-entrance/">总平台 / Platform</a>
         </div>
@@ -291,10 +315,11 @@
       </section>
     </main>
 
-    <div class="site-version">Version 43</div>
+    <div class="site-version">Version 44</div>
     <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script defer src="./lsesu_question_bank.js?v=43"></script>
-    <script defer src="./recommendation-engine.js?v=43"></script>
-    <script defer src="./app.js?v=43"></script>
+    <script defer src="./lsesu_question_bank.js?v=44"></script>
+    <script defer src="./recommendation-engine.js?v=44"></script>
+    <script defer src="./app.js?v=44"></script>
+    <script defer src="./competition-admin.js?v=44"></script>
   </body>
 </html>
